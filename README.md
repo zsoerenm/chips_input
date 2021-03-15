@@ -2,21 +2,19 @@
 
 Flutter library for building input fields with InputChips as input options.
 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/zsoerenm/chips_input/CI?style=for-the-badge)](https://github.com/zsoerenm/chips_input/actions?query=workflow%3ACI)
+
 ## Usage
-
-### Installation
-
-Follow installation instructions [here](https://pub.dartlang.org/packages/flutter_chips_input#-installing-tab-)
 
 ### Import
 
 ```dart
-import 'package:flutter_chips_input/flutter_chips_input.dart';
+import 'package:chips_input/chips_input.dart';
 ```
 
 ### Example
 
-#### ChipsInput
+![ChipsInput](example/chips_input.png)
 
 First create some sort of Class that holds the data. You could also use a simple String.
 ```dart
@@ -74,7 +72,7 @@ const mockResults = <AppProfile>[
 ];
 
 ChipsInput(
-    maxChips: 3,
+    maxChips: 3, // remove, if you like infinity number of chips
     initialValue: [mockResults[1]],
     findSuggestions: (String query) {
         if (query.isNotEmpty) {
@@ -122,6 +120,10 @@ ChipsInput(
     },
 )
 ```
+
+## Known issues
+
+* `findSuggestions` currently only supports synchronous suggestions. This is due to the fact, that ChipsInput builds upon the new `AutoComplete` widget in flutter 2.0 and this does not support asynchronous data at the moment ([see here](https://github.com/flutter/flutter/pull/62927#issuecomment-792145269)).
 
 ## Credit
 
