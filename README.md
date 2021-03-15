@@ -2,6 +2,7 @@
 
 Flutter library for building input fields with InputChips as input options.
 
+[![Pub Version](https://img.shields.io/pub/v/chips_input?style=for-the-badge)](https://pub.dev/packages/chips_input)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/zsoerenm/chips_input/CI?style=for-the-badge)](https://github.com/zsoerenm/chips_input/actions?query=workflow%3ACI)
 
 ## Usage
