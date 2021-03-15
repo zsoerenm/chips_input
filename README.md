@@ -124,7 +124,7 @@ ChipsInput(
 
 ## Known issues
 
-* `findSuggestions` currently only supports synchronous suggestions. This is due to the fact, that ChipsInput builds upon the new `AutoComplete` widget in flutter 2.0 and this does not support asynchronous data at the moment ([see here](https://github.com/flutter/flutter/pull/62927#issuecomment-792145269)).
+* `findSuggestions` currently only supports synchronous suggestions. This is due to the fact, that ChipsInput builds upon the new `AutoComplete` widget in Flutter 2.0 and this does not support asynchronous data at the moment ([see here](https://github.com/flutter/flutter/pull/62927#issuecomment-792145269)).
 
 ## Credit
 
