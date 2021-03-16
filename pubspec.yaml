@@ -1,5 +1,5 @@
 name: chips_input
-description: A new Flutter package project.
+description: A Flutter Widget to create an input with multiple chips, that can be selected from suggestions. 
 version: 0.0.1
 homepage: https://github.com/zsoerenm/chips_input
 

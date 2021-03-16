@@ -15,7 +15,7 @@ import 'package:chips_input/chips_input.dart';
 
 ### Example
 
-![ChipsInput](example/chips_input.png)
+![ChipsInput](https://github.com/zsoerenm/chips_input/blob/main/example/chips_input.png?raw=true)
 
 First create some sort of Class that holds the data. You could also use a simple String.
 ```dart
