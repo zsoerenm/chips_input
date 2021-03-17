@@ -13,7 +13,7 @@ import 'package:flutter/gestures.dart';
 typedef ChipsInputSuggestions<T> = List<T> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
-    BuildContext context, _ChipsInputState<T> state, T data);
+    BuildContext context, ChipsInputState<T> state, T data);
 typedef SuggestionBuilder<T extends Object> = Widget Function(
     BuildContext context, T data);
 
@@ -472,10 +472,10 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   final String? restorationId;
 
   @override
-  _ChipsInputState<T> createState() => _ChipsInputState<T>();
+  ChipsInputState<T> createState() => ChipsInputState<T>();
 }
 
-class _ChipsInputState<T extends Object> extends State<ChipsInput<T>>
+class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     with RestorationMixin {
   RestorableTextEditingController? _controller;
   TextEditingController get _effectiveController =>
