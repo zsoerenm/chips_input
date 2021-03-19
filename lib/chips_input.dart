@@ -677,14 +677,21 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
             onTap: () {
               FocusScope.of(context).requestFocus(focusNode);
             },
-            child: InputDecorator(
-                decoration: widget.decoration ?? InputDecoration(),
-                expands: widget.expands,
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: chipsAndTextField,
-                )));
+            child: AnimatedBuilder(
+            animation: Listenable.merge(<Listenable>[focusNode, controller]),
+            builder: (context, child) => InputDecorator(
+              isFocused: focusNode.hasFocus,
+              decoration: widget.decoration ?? InputDecoration(),
+              expands: widget.expands,
+              child: child,
+            ),
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: chipsAndTextField,
+            ),
+          ),
+        );
       },
       optionsViewBuilder: (BuildContext context,
           AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
