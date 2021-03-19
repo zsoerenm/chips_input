@@ -1,3 +1,7 @@
+## [0.0.4] - 17-Mar-2021
+
+* Handle focus changes with AnimatedBuilder
+
 ## [0.0.3] - 17-Mar-2021
 
 * Make ChipsInputState public
