@@ -1,4 +1,4 @@
-## [0.0.4] - 17-Mar-2021
+## [0.0.4] - 19-Mar-2021
 
 * Handle focus changes with AnimatedBuilder
 

@@ -673,11 +673,11 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           )
         ];
         return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              FocusScope.of(context).requestFocus(focusNode);
-            },
-            child: AnimatedBuilder(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            FocusScope.of(context).requestFocus(focusNode);
+          },
+          child: AnimatedBuilder(
             animation: Listenable.merge(<Listenable>[focusNode, controller]),
             builder: (context, child) => InputDecorator(
               isFocused: focusNode.hasFocus,
