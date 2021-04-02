@@ -122,6 +122,44 @@ ChipsInput(
 )
 ```
 
+Instead of the `suggestionBuilder` you can also pass an `optionsViewBuilder` for more customization:
+
+```dart
+//...
+optionsViewBuilder: (context, onSelected, options) {
+    return Align(
+        alignment: Alignment.topLeft,
+        child: Material(
+            elevation: 4.0,
+            child: Container(
+                height: 200.0,
+                child: ListView.builder(
+                    padding: EdgeInsets.all(8.0),
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                        final option = options.elementAt(index);
+                        return GestureDetector(
+                            onTap: () {
+                                onSelected(option);
+                            },
+                            child: ListTile(
+                                key: ObjectKey(option),
+                                leading: CircleAvatar(
+                                    backgroundImage: NetworkImage(option.imageUrl),
+                                ),
+                                title: Text(option.name),
+                                subtitle: Text(option.email),
+                            ),
+                        );
+                    },
+                ),
+            ),
+        ),
+    );
+},
+//...
+```
+
 ## Known issues
 
 * `findSuggestions` currently only supports synchronous suggestions. This is due to the fact, that ChipsInput builds upon the new `AutoComplete` widget in Flutter 2.0 and this does not support asynchronous data at the moment ([see here](https://github.com/flutter/flutter/pull/62927#issuecomment-792145269)).

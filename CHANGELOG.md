@@ -1,3 +1,8 @@
+## [0.0.5] - 02-Apr-2021
+
+* Allow to pass optionsViewBuilder instead of suggestionBuilder
+* Fix bug: There was a possibility to select more than maxChips chips.
+
 ## [0.0.4] - 19-Mar-2021
 
 * Handle focus changes with AnimatedBuilder

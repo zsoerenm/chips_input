@@ -21,8 +21,9 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   const ChipsInput({
     Key? key,
     required this.chipBuilder,
-    required this.suggestionBuilder,
+    this.suggestionBuilder,
     required this.findSuggestions,
+    this.optionsViewBuilder,
     this.maxChips,
     this.initialValue = const [],
     this.controller,
@@ -80,6 +81,10 @@ class ChipsInput<T extends Object> extends StatefulWidget {
         assert(maxLines == null || maxLines > 0),
         assert(minLines == null || minLines > 0),
         assert(
+          (suggestionBuilder != null) || (optionsViewBuilder != null),
+          "suggestionBuilder or optionsViewBuilder must be be provided",
+        ),
+        assert(
           (maxLines == null) || (minLines == null) || (maxLines >= minLines),
           "minLines can't be greater than maxLines",
         ),
@@ -118,7 +123,7 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   final ChipsBuilder<T> chipBuilder;
 
   /// The inital value. Must be a List of T
-  final SuggestionBuilder<T> suggestionBuilder;
+  final SuggestionBuilder<T>? suggestionBuilder;
 
   /// The inital value. Must be a List of T
   final List<T> initialValue;
@@ -471,6 +476,12 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   /// {@endtemplate}
   final String? restorationId;
 
+  /// {@macro flutter.widgets.RawAutocomplete.optionsViewBuilder}
+  ///
+  /// If not provided, will build a standard Material-style list of results by
+  /// default.
+  final AutocompleteOptionsViewBuilder<T>? optionsViewBuilder;
+
   @override
   ChipsInputState<T> createState() => ChipsInputState<T>();
 }
@@ -589,135 +600,168 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     final theme = Theme.of(context);
     final TextStyle style =
         theme.textTheme.subtitle1!.copyWith(height: 1.5).merge(widget.style);
+    Widget _defaultOptionsViewBuilder(BuildContext context,
+        AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
+      return _DefaultOptionsViewBuilder(
+        onSelected: onSelected,
+        options: options,
+        suggestionBuilder: widget.suggestionBuilder!,
+      );
+    }
+
+    Widget _emptyOptionsViewBuilder(BuildContext context,
+        AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
+      return Container();
+    }
+
+    final maxReached = (widget.maxChips != null &&
+        widget.maxChips! <= _chips.length &&
+        _chips.length > 0);
+
     return RawAutocomplete<T>(
-      focusNode: focusNode,
-      textEditingController: controller,
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text.length < _chips.length) {
-          _deleteLastChips(textEditingValue.text.length);
-        }
-        final options = widget
-            .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
-        final notUsedOptions =
-            options.where((r) => !_chips.contains(r)).toList(growable: false);
-        return notUsedOptions;
-      },
-      onSelected: (T option) {
-        _addChip(option);
-      },
-      displayStringForOption: (T option) {
-        return [..._chips.map((e) => "$space"), "$space"].join();
-      },
-      fieldViewBuilder: (BuildContext context,
-          TextEditingController textEditingController,
-          FocusNode focusNode,
-          VoidCallback onFieldSubmitted) {
-        List<Widget> chipsAndTextField = [
-          ...chipwidgets,
-          IntrinsicWidth(
-            child: TextField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              onTap: widget.onTap,
-              style: style,
-              maxLength: (widget.maxChips != null &&
-                      widget.maxChips! <= _chips.length &&
-                      _chips.length > 0)
-                  ? _chips.length
-                  : widget.maxLength,
-              maxLengthEnforcement: widget.maxLengthEnforcement,
-              maxLines: widget.maxLines,
-              enabled: widget.enabled,
-              keyboardType: widget.keyboardType,
-              keyboardAppearance: widget.keyboardAppearance,
-              textInputAction: widget.textInputAction,
-              textCapitalization: widget.textCapitalization,
-              strutStyle: widget.strutStyle,
-              textAlign: widget.textAlign,
-              textAlignVertical: widget.textAlignVertical,
-              textDirection: widget.textDirection,
-              readOnly: widget.readOnly,
-              toolbarOptions: widget.toolbarOptions,
-              showCursor: widget.showCursor,
-              cursorWidth: widget.cursorWidth,
-              cursorHeight: widget.cursorHeight,
-              cursorRadius: widget.cursorRadius,
-              cursorColor: widget.cursorColor,
-              autofocus: widget.autofocus,
-              obscuringCharacter: widget.obscuringCharacter,
-              obscureText: widget.obscureText,
-              autocorrect: widget.autocorrect,
-              smartDashesType: widget.smartDashesType,
-              smartQuotesType: widget.smartQuotesType,
-              minLines: widget.minLines,
-              onEditingComplete: widget.onEditingComplete,
-              onAppPrivateCommand: widget.onAppPrivateCommand,
-              inputFormatters: widget.inputFormatters,
-              selectionHeightStyle: widget.selectionHeightStyle,
-              selectionWidthStyle: widget.selectionWidthStyle,
-              scrollPadding: widget.scrollPadding,
-              scrollController: widget.scrollController,
-              scrollPhysics: widget.scrollPhysics,
-              dragStartBehavior: widget.dragStartBehavior,
-              enableInteractiveSelection: widget.enableInteractiveSelection,
-              selectionControls: widget.selectionControls,
-              mouseCursor: widget.mouseCursor,
-              buildCounter: widget.buildCounter,
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: widget.decoration?.hintText,
-                  counterText: "",
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 5)),
-            ),
-          )
-        ];
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            FocusScope.of(context).requestFocus(focusNode);
-          },
-          child: AnimatedBuilder(
-            animation: Listenable.merge(<Listenable>[focusNode, controller]),
-            builder: (context, child) => InputDecorator(
-              isFocused: focusNode.hasFocus,
-              decoration: widget.decoration ?? InputDecoration(),
-              expands: widget.expands,
-              child: child,
-            ),
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: chipsAndTextField,
-            ),
-          ),
-        );
-      },
-      optionsViewBuilder: (BuildContext context,
-          AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 4.0,
-            child: Container(
-              height: 200.0,
-              child: ListView.builder(
-                padding: EdgeInsets.all(8.0),
-                itemCount: options.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final T option = options.elementAt(index);
-                  return GestureDetector(
-                    onTap: () {
-                      onSelected(option);
-                    },
-                    child: widget.suggestionBuilder(context, option),
-                  );
-                },
+        focusNode: focusNode,
+        textEditingController: controller,
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text.length < _chips.length) {
+            _deleteLastChips(textEditingValue.text.length);
+          }
+          final options = widget
+              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
+          final notUsedOptions =
+              options.where((r) => !_chips.contains(r)).toList(growable: false);
+          return notUsedOptions;
+        },
+        onSelected: (T option) {
+          _addChip(option);
+        },
+        displayStringForOption: (T option) {
+          return [..._chips.map((e) => "$space"), "$space"].join();
+        },
+        fieldViewBuilder: (BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            VoidCallback onFieldSubmitted) {
+          List<Widget> chipsAndTextField = [
+            ...chipwidgets,
+            IntrinsicWidth(
+              child: TextField(
+                controller: textEditingController,
+                focusNode: focusNode,
+                onTap: widget.onTap,
+                style: style,
+                maxLength: maxReached ? _chips.length : widget.maxLength,
+                maxLengthEnforcement: widget.maxLengthEnforcement,
+                maxLines: widget.maxLines,
+                enabled: widget.enabled,
+                keyboardType: widget.keyboardType,
+                keyboardAppearance: widget.keyboardAppearance,
+                textInputAction: widget.textInputAction,
+                textCapitalization: widget.textCapitalization,
+                strutStyle: widget.strutStyle,
+                textAlign: widget.textAlign,
+                textAlignVertical: widget.textAlignVertical,
+                textDirection: widget.textDirection,
+                readOnly: widget.readOnly,
+                toolbarOptions: widget.toolbarOptions,
+                showCursor: widget.showCursor,
+                cursorWidth: widget.cursorWidth,
+                cursorHeight: widget.cursorHeight,
+                cursorRadius: widget.cursorRadius,
+                cursorColor: widget.cursorColor,
+                autofocus: widget.autofocus,
+                obscuringCharacter: widget.obscuringCharacter,
+                obscureText: widget.obscureText,
+                autocorrect: widget.autocorrect,
+                smartDashesType: widget.smartDashesType,
+                smartQuotesType: widget.smartQuotesType,
+                minLines: widget.minLines,
+                onEditingComplete: widget.onEditingComplete,
+                onAppPrivateCommand: widget.onAppPrivateCommand,
+                inputFormatters: widget.inputFormatters,
+                selectionHeightStyle: widget.selectionHeightStyle,
+                selectionWidthStyle: widget.selectionWidthStyle,
+                scrollPadding: widget.scrollPadding,
+                scrollController: widget.scrollController,
+                scrollPhysics: widget.scrollPhysics,
+                dragStartBehavior: widget.dragStartBehavior,
+                enableInteractiveSelection: widget.enableInteractiveSelection,
+                selectionControls: widget.selectionControls,
+                mouseCursor: widget.mouseCursor,
+                buildCounter: widget.buildCounter,
+                decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: widget.decoration?.hintText,
+                    counterText: "",
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 5)),
+              ),
+            )
+          ];
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              FocusScope.of(context).requestFocus(focusNode);
+            },
+            child: AnimatedBuilder(
+              animation: Listenable.merge(<Listenable>[focusNode, controller]),
+              builder: (context, child) => InputDecorator(
+                isFocused: focusNode.hasFocus,
+                decoration: widget.decoration ?? InputDecoration(),
+                expands: widget.expands,
+                child: child,
+              ),
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: chipsAndTextField,
               ),
             ),
+          );
+        },
+        optionsViewBuilder: maxReached
+            ? _emptyOptionsViewBuilder
+            : widget.optionsViewBuilder ?? _defaultOptionsViewBuilder);
+  }
+}
+
+// The default Material-style Autocomplete options.
+class _DefaultOptionsViewBuilder<T extends Object> extends StatelessWidget {
+  const _DefaultOptionsViewBuilder({
+    Key? key,
+    required this.onSelected,
+    required this.options,
+    required this.suggestionBuilder,
+  }) : super(key: key);
+
+  final AutocompleteOnSelected<T> onSelected;
+
+  final Iterable<T> options;
+
+  final SuggestionBuilder<T> suggestionBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Material(
+        elevation: 4.0,
+        child: Container(
+          height: 200.0,
+          child: ListView.builder(
+            padding: EdgeInsets.all(8.0),
+            itemCount: options.length,
+            itemBuilder: (BuildContext context, int index) {
+              final T option = options.elementAt(index);
+              return GestureDetector(
+                onTap: () {
+                  onSelected(option);
+                },
+                child: suggestionBuilder(context, option),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
