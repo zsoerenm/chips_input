@@ -567,7 +567,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
       numKeepChips = 0;
     }
     setState(() {
-      _chips = _chips.take(numKeepChips).toList();
+      _chips = _chips..take(numKeepChips).toList();
     });
     if (widget.onChanged != null)
       widget.onChanged!(_chips.toList(growable: false));
