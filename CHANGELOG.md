@@ -1,3 +1,7 @@
+## [0.0.6] - 13-May-2021
+
+* Fix chip deletion bug
+
 ## [0.0.5] - 02-Apr-2021
 
 * Allow to pass optionsViewBuilder instead of suggestionBuilder
