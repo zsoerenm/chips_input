@@ -567,7 +567,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
       numKeepChips = 0;
     }
     setState(() {
-      _chips = _chips..take(numKeepChips).toList();
+      _chips = _chips.take(numKeepChips).toList();
     });
     if (widget.onChanged != null)
       widget.onChanged!(_chips.toList(growable: false));
@@ -576,8 +576,10 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   void deleteChip(T data) {
     if (widget.enabled == null || widget.enabled!) {
       setState(() {
-        _effectiveController.text = _effectiveController.text.substring(1);
         _chips = _chips..remove(data);
+        _effectiveController.text = _effectiveController.text.substring(1);
+        _effectiveController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _effectiveController.text.length));
       });
       if (widget.onChanged != null)
         widget.onChanged!(_chips.toList(growable: false));
