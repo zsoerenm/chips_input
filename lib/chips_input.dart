@@ -586,6 +586,21 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     }
   }
 
+  void onSubmitted(String value) {
+    final suggestions = widget.findSuggestions(value.replaceAll("$space", ""));
+    if (suggestions.isNotEmpty) {
+      _addChip(suggestions.first);
+
+      final String selectionString = _chips.map((e) => "$space").join();
+      _effectiveController.value = TextEditingValue(
+        selection: TextSelection.collapsed(offset: selectionString.length),
+        text: selectionString,
+      );
+    } else {
+      _effectiveFocusNode.unfocus();
+    }
+  }
+
   @override
   void dispose() {
     _focusNode?.dispose();
@@ -635,6 +650,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
         },
         onSelected: (T option) {
           _addChip(option);
+          focusNode.unfocus();
         },
         displayStringForOption: (T option) {
           return [..._chips.map((e) => "$space"), "$space"].join();
@@ -651,6 +667,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 focusNode: focusNode,
                 onTap: widget.onTap,
                 style: style,
+                onSubmitted: onSubmitted,
                 maxLength: maxReached ? _chips.length : widget.maxLength,
                 maxLengthEnforcement: widget.maxLengthEnforcement,
                 maxLines: widget.maxLines,
