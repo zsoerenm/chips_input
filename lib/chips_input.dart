@@ -502,6 +502,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_focusNode ??= FocusNode());
   bool get _isEnabled => widget.enabled ?? widget.decoration?.enabled ?? true;
+  List<T> _options = [];
 
   @override
   void initState() {
@@ -591,8 +592,8 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   }
 
   void onSubmitted(String value) {
-    if (_suggestions.isNotEmpty) {
-      _addChip(_suggestions.first);
+    if (_options.isNotEmpty) {
+      _addChip(_options.first);
 
       final String selectionString = _chips.map((e) => "$space").join();
       _effectiveController.value = TextEditingValue(
@@ -610,8 +611,6 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     _controller?.dispose();
     super.dispose();
   }
-
-  List<T> _suggestions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -650,7 +649,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           
           final options = await widget.findSuggestions(textEditingValue.text.replaceAll("$space", ""));
           final notUsedOptions = options.where((r) => !_chips.contains(r)).toList(growable: false);
-          _suggestions = options;
+          _options = notUsedOptions;
           return notUsedOptions;
         },
         onSelected: (T option) {
