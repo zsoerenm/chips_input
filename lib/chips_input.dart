@@ -500,6 +500,10 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_focusNode ??= FocusNode());
   bool get _isEnabled => widget.enabled ?? widget.decoration?.enabled ?? true;
+  bool _stopFindingOptions = true;
+  String? _previousTextValue;
+  List<T> _options = [];
+  List<T> _notUsedOptions = [];
 
   @override
   void initState() {
@@ -608,11 +612,6 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     _controller?.dispose();
     super.dispose();
   }
-
-  bool _stopFindingOptions = true;
-  String? _previousTextValue;
-  List<T> _options = [];
-  List<T> _notUsedOptions = [];
 
   @override
   Widget build(BuildContext context) {
