@@ -1,5 +1,7 @@
 library chips_input;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +14,7 @@ import 'package:flutter/gestures.dart';
 
 import 'asyncautocomplete.dart';
 
-typedef ChipsInputSuggestions<T> = Future<List<T>> Function(String query);
+typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);

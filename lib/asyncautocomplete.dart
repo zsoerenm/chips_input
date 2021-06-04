@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-typedef AsyncAutocompleteOptionsBuilder<T extends Object> = Future<Iterable<T>> Function(TextEditingValue textEditingValue);
+typedef AsyncAutocompleteOptionsBuilder<T extends Object> = FutureOr<Iterable<T>> Function(TextEditingValue textEditingValue);
 
 class AsyncRawAutocomplete<T extends Object> extends StatefulWidget {
   /// Create an instance of AsyncRawAutocomplete.
