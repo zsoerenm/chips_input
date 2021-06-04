@@ -1,5 +1,7 @@
 library chips_input;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
-typedef ChipsInputSuggestions<T> = List<T> Function(String query);
+typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
@@ -498,6 +500,10 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_focusNode ??= FocusNode());
   bool get _isEnabled => widget.enabled ?? widget.decoration?.enabled ?? true;
+  bool _stopFindingOptions = true;
+  String? _previousTextValue;
+  List<T> _options = [];
+  List<T> _notUsedOptions = [];
 
   @override
   void initState() {
@@ -586,6 +592,20 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     }
   }
 
+  void onSubmitted(String value) {
+    if (_notUsedOptions.isNotEmpty) {
+      _addChip(_notUsedOptions.first);
+
+      final String selectionString = _chips.map((e) => "$space").join();
+      _effectiveController.value = TextEditingValue(
+        selection: TextSelection.collapsed(offset: selectionString.length),
+        text: selectionString,
+      );
+    } else {
+      _effectiveFocusNode.unfocus();
+    }
+  }
+
   @override
   void dispose() {
     _focusNode?.dispose();
@@ -624,17 +644,42 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
         focusNode: focusNode,
         textEditingController: controller,
         optionsBuilder: (TextEditingValue textEditingValue) {
+          final _newTextValue = textEditingValue.text.replaceAll("$space", "");
+          final textChanged = _previousTextValue != _newTextValue;
+          _previousTextValue = _newTextValue;
+
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = widget
-              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
-          final notUsedOptions =
-              options.where((r) => !_chips.contains(r)).toList(growable: false);
+          
+          // Prevent infinite loops
+          if (textChanged) {
+            final foundSuggestions = widget.findSuggestions(_newTextValue);
+            if (foundSuggestions is Future) {
+              _stopFindingOptions = false;
+              (foundSuggestions as Future<List<T>>).then((value) {
+                // Don't set stale suggestions
+                if (_stopFindingOptions) return;
+
+                _stopFindingOptions = _newTextValue == _previousTextValue;
+                _options = value;
+                _effectiveController.notifyListeners();
+              });
+            } else {
+              _stopFindingOptions = true;
+              _options = foundSuggestions;
+            }
+          }
+
+          final notUsedOptions = _options.where((r) => !_chips.contains(r)).toList(growable: false);
+          _notUsedOptions = _options;
           return notUsedOptions;
         },
         onSelected: (T option) {
           _addChip(option);
+
+          // update suggestions
+          controller.notifyListeners();
         },
         displayStringForOption: (T option) {
           return [..._chips.map((e) => "$space"), "$space"].join();
@@ -651,6 +696,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 focusNode: focusNode,
                 onTap: widget.onTap,
                 style: style,
+                onSubmitted: onSubmitted,
                 maxLength: maxReached ? _chips.length : widget.maxLength,
                 maxLengthEnforcement: widget.maxLengthEnforcement,
                 maxLines: widget.maxLines,
