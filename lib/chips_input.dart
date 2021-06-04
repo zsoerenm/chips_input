@@ -73,6 +73,7 @@ class ChipsInput<T extends Object> extends StatefulWidget {
     this.scrollController,
     this.scrollPhysics,
     this.restorationId,
+    this.addSuggestedOnSubmit = false,
   })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ??
             (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
@@ -482,6 +483,10 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   /// default.
   final AutocompleteOptionsViewBuilder<T>? optionsViewBuilder;
 
+  /// This will add the first result from [suggestionBuilder] when you press the 
+  /// [textInputAction] on the keyboard.
+  final bool addSuggestedOnSubmit;
+
   @override
   ChipsInputState<T> createState() => ChipsInputState<T>();
 }
@@ -586,6 +591,21 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     }
   }
 
+  void onSubmitted(String value) {
+    final suggestions = widget.findSuggestions(value.replaceAll("$space", ""));
+    if (suggestions.isNotEmpty) {
+      _addChip(suggestions.first);
+
+      final String selectionString = _chips.map((e) => "$space").join();
+      _effectiveController.value = TextEditingValue(
+        selection: TextSelection.collapsed(offset: selectionString.length),
+        text: selectionString,
+      );
+    } else {
+      _effectiveFocusNode.unfocus();
+    }
+  }
+
   @override
   void dispose() {
     _focusNode?.dispose();
@@ -651,6 +671,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 focusNode: focusNode,
                 onTap: widget.onTap,
                 style: style,
+                onSubmitted: widget.addSuggestedOnSubmit ? onSubmitted : null,
                 maxLength: maxReached ? _chips.length : widget.maxLength,
                 maxLengthEnforcement: widget.maxLengthEnforcement,
                 maxLines: widget.maxLines,
@@ -748,21 +769,18 @@ class _DefaultOptionsViewBuilder<T extends Object> extends StatelessWidget {
       alignment: Alignment.topLeft,
       child: Material(
         elevation: 4.0,
-        child: Container(
-          height: 200.0,
-          child: ListView.builder(
-            padding: EdgeInsets.all(8.0),
-            itemCount: options.length,
-            itemBuilder: (BuildContext context, int index) {
-              final T option = options.elementAt(index);
-              return GestureDetector(
-                onTap: () {
-                  onSelected(option);
-                },
-                child: suggestionBuilder(context, option),
-              );
-            },
-          ),
+        child: ListView.builder(
+          padding: EdgeInsets.all(8.0),
+          itemCount: options.length,
+          itemBuilder: (BuildContext context, int index) {
+            final T option = options.elementAt(index);
+            return GestureDetector(
+              onTap: () {
+                onSelected(option);
+              },
+              child: suggestionBuilder(context, option),
+            );
+          },
         ),
       ),
     );
