@@ -10,7 +10,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
-typedef ChipsInputSuggestions<T> = List<T> Function(String query);
+typedef ChipsInputSuggestions<T> = Future<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
@@ -586,12 +586,30 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     }
   }
 
+  void onSubmitted(String value) {
+    if (_suggestions.isNotEmpty) {
+      _addChip(_suggestions.first);
+
+      final String selectionString = _chips.map((e) => "$space").join();
+      _effectiveController.value = TextEditingValue(
+        selection: TextSelection.collapsed(offset: selectionString.length),
+        text: selectionString,
+      );
+    } else {
+      _effectiveFocusNode.unfocus();
+    }
+  }
+
   @override
   void dispose() {
     _focusNode?.dispose();
     _controller?.dispose();
     super.dispose();
   }
+
+  bool _stopSuggestions = true;
+  String? _previousTextValue;
+  List<T> _suggestions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -624,17 +642,35 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
         focusNode: focusNode,
         textEditingController: controller,
         optionsBuilder: (TextEditingValue textEditingValue) {
+          final _newTextValue = textEditingValue.text.replaceAll("$space", "");
+          final textChanged = _previousTextValue != _newTextValue;
+          _previousTextValue = _newTextValue;
+
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = widget
-              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
-          final notUsedOptions =
-              options.where((r) => !_chips.contains(r)).toList(growable: false);
+          
+          // Prevent infinite loops
+          if (textChanged) {
+            _stopSuggestions = false;
+            widget.findSuggestions(_newTextValue).then((value) {
+              // Don't set stale suggestions
+              if (_stopSuggestions) return;
+
+              _stopSuggestions = _newTextValue == _previousTextValue;
+              _suggestions = value;
+              _effectiveController.notifyListeners();
+            });
+          }
+
+          final notUsedOptions = _suggestions.where((r) => !_chips.contains(r)).toList(growable: false);
           return notUsedOptions;
         },
         onSelected: (T option) {
           _addChip(option);
+
+          // update suggestions
+          controller.notifyListeners();
         },
         displayStringForOption: (T option) {
           return [..._chips.map((e) => "$space"), "$space"].join();
@@ -651,6 +687,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 focusNode: focusNode,
                 onTap: widget.onTap,
                 style: style,
+                onSubmitted: onSubmitted,
                 maxLength: maxReached ? _chips.length : widget.maxLength,
                 maxLengthEnforcement: widget.maxLengthEnforcement,
                 maxLines: widget.maxLines,
