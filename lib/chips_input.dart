@@ -10,7 +10,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
-typedef ChipsInputSuggestions<T> = List<T> Function(String query);
+import 'asyncautocomplete.dart';
+
+typedef ChipsInputSuggestions<T> = Future<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
@@ -586,12 +588,28 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     }
   }
 
+  void onSubmitted(String value) {
+    if (_suggestions.isNotEmpty) {
+      _addChip(_suggestions.first);
+
+      final String selectionString = _chips.map((e) => "$space").join();
+      _effectiveController.value = TextEditingValue(
+        selection: TextSelection.collapsed(offset: selectionString.length),
+        text: selectionString,
+      );
+    } else {
+      _effectiveFocusNode.unfocus();
+    }
+  }
+
   @override
   void dispose() {
     _focusNode?.dispose();
     _controller?.dispose();
     super.dispose();
   }
+
+  List<T> _suggestions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -620,17 +638,17 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
         widget.maxChips! <= _chips.length &&
         _chips.length > 0);
 
-    return RawAutocomplete<T>(
+    return AsyncRawAutocomplete<T>(
         focusNode: focusNode,
         textEditingController: controller,
-        optionsBuilder: (TextEditingValue textEditingValue) {
+        optionsBuilder: (TextEditingValue textEditingValue) async {
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = widget
-              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
-          final notUsedOptions =
-              options.where((r) => !_chips.contains(r)).toList(growable: false);
+          
+          final options = await widget.findSuggestions(textEditingValue.text.replaceAll("$space", ""));
+          final notUsedOptions = options.where((r) => !_chips.contains(r)).toList(growable: false);
+          _suggestions = options;
           return notUsedOptions;
         },
         onSelected: (T option) {
@@ -651,6 +669,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 focusNode: focusNode,
                 onTap: widget.onTap,
                 style: style,
+                onSubmitted: onSubmitted,
                 maxLength: maxReached ? _chips.length : widget.maxLength,
                 maxLengthEnforcement: widget.maxLengthEnforcement,
                 maxLines: widget.maxLines,
