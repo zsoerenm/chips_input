@@ -1,5 +1,7 @@
 library chips_input;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
-typedef ChipsInputSuggestions<T> = Future<List<T>> Function(String query);
+typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
@@ -653,15 +655,21 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           
           // Prevent infinite loops
           if (textChanged) {
-            _stopFindingOptions = false;
-            widget.findSuggestions(_newTextValue).then((value) {
-              // Don't set stale suggestions
-              if (_stopFindingOptions) return;
+            final foundSuggestions = widget.findSuggestions(_newTextValue);
+            if (foundSuggestions is Future) {
+              _stopFindingOptions = false;
+              (foundSuggestions as Future<List<T>>).then((value) {
+                // Don't set stale suggestions
+                if (_stopFindingOptions) return;
 
-              _stopFindingOptions = _newTextValue == _previousTextValue;
-              _options = value;
-              _effectiveController.notifyListeners();
-            });
+                _stopFindingOptions = _newTextValue == _previousTextValue;
+                _options = value;
+                _effectiveController.notifyListeners();
+              });
+            } else {
+              _stopFindingOptions = true;
+              _options = foundSuggestions;
+            }
           }
 
           final notUsedOptions = _options.where((r) => !_chips.contains(r)).toList(growable: false);
