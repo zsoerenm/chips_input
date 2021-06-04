@@ -708,6 +708,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
               animation: Listenable.merge(<Listenable>[focusNode, controller]),
               builder: (context, child) => InputDecorator(
                 isFocused: focusNode.hasFocus,
+                isEmpty: textEditingController.value.text.isEmpty,
                 decoration: widget.decoration ?? InputDecoration(),
                 expands: widget.expands,
                 child: child,
