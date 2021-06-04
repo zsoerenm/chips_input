@@ -587,8 +587,8 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   }
 
   void onSubmitted(String value) {
-    if (_suggestions.isNotEmpty) {
-      _addChip(_suggestions.first);
+    if (_notUsedOptions.isNotEmpty) {
+      _addChip(_notUsedOptions.first);
 
       final String selectionString = _chips.map((e) => "$space").join();
       _effectiveController.value = TextEditingValue(
@@ -607,9 +607,10 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     super.dispose();
   }
 
-  bool _stopSuggestions = true;
+  bool _stopFindingOptions = true;
   String? _previousTextValue;
-  List<T> _suggestions = [];
+  List<T> _options = [];
+  List<T> _notUsedOptions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -652,18 +653,19 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           
           // Prevent infinite loops
           if (textChanged) {
-            _stopSuggestions = false;
+            _stopFindingOptions = false;
             widget.findSuggestions(_newTextValue).then((value) {
               // Don't set stale suggestions
-              if (_stopSuggestions) return;
+              if (_stopFindingOptions) return;
 
-              _stopSuggestions = _newTextValue == _previousTextValue;
-              _suggestions = value;
+              _stopFindingOptions = _newTextValue == _previousTextValue;
+              _options = value;
               _effectiveController.notifyListeners();
             });
           }
 
-          final notUsedOptions = _suggestions.where((r) => !_chips.contains(r)).toList(growable: false);
+          final notUsedOptions = _options.where((r) => !_chips.contains(r)).toList(growable: false);
+          _notUsedOptions = _options;
           return notUsedOptions;
         },
         onSelected: (T option) {
