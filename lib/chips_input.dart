@@ -1,16 +1,15 @@
 library chips_input;
 
-import 'package:flutter/widgets.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui' as ui show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
-typedef ChipsInputSuggestions<T> = Future<List<T>> Function(String query);
+typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
