@@ -160,10 +160,6 @@ optionsViewBuilder: (context, onSelected, options) {
 //...
 ```
 
-## Known issues
-
-* `findSuggestions` currently only supports synchronous suggestions. This is due to the fact, that ChipsInput builds upon the new `AutoComplete` widget in Flutter 2.0 and this does not support asynchronous data at the moment ([see here](https://github.com/flutter/flutter/pull/62927#issuecomment-792145269)).
-
 ## Credit
 
 * Danvick Miller for the package [flutter_chips_input](https://github.com/danvick/flutter_chips_input)
