@@ -10,7 +10,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 
-typedef ChipsInputSuggestions<T> = List<T> Function(String query);
+typedef ChipsInputSuggestions<T> = Future<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
 typedef ChipsBuilder<T extends Object> = Widget Function(
     BuildContext context, ChipsInputState<T> state, T data);
@@ -623,12 +623,11 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     return RawAutocomplete<T>(
         focusNode: focusNode,
         textEditingController: controller,
-        optionsBuilder: (TextEditingValue textEditingValue) {
+        optionsBuilder: (TextEditingValue textEditingValue) async {
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = widget
-              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
+          final options = await widget.findSuggestions(textEditingValue.text.replaceAll("$space", ""));
           final notUsedOptions =
               options.where((r) => !_chips.contains(r)).toList(growable: false);
           return notUsedOptions;
