@@ -17,7 +17,7 @@ void main() {
           body: ChipsInput<String>(
             initialValue: allContacts.sublist(1, 3),
             maxChips: 3,
-            findSuggestions: (String query) => query.isNotEmpty
+            findSuggestions: (String query) async => query.isNotEmpty
                 ? allContacts
                     .where((_) => _.toLowerCase().contains(query.toLowerCase()))
                     .toList()
@@ -50,7 +50,7 @@ void main() {
           body: ChipsInput<String>(
             initialValue: allContacts.sublist(1, 3),
             maxChips: 3,
-            findSuggestions: (String query) => query.isNotEmpty
+            findSuggestions: (String query) async => query.isNotEmpty
                 ? allContacts
                     .where((_) => _.toLowerCase().contains(query.toLowerCase()))
                     .toList()
