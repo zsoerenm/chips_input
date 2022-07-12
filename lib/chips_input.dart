@@ -1,13 +1,12 @@
 library chips_input;
 
 import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:ui' as ui show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
@@ -72,6 +71,8 @@ class ChipsInput<T extends Object> extends StatefulWidget {
     this.scrollController,
     this.scrollPhysics,
     this.restorationId,
+    this.wrap = true,
+    this.textContentPadding = const EdgeInsets.symmetric(vertical: 5.0),
   })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ??
             (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
@@ -121,10 +122,10 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   final ChipsInputSuggestions<T> findSuggestions;
   final ChipsBuilder<T> chipBuilder;
 
-  /// The inital value. Must be a List of T
+  /// The initial value. Must be a List of T
   final SuggestionBuilder<T>? suggestionBuilder;
 
-  /// The inital value. Must be a List of T
+  /// The initial value. Must be a List of T
   final List<T> initialValue;
 
   /// The maximum number of chips
@@ -481,21 +482,36 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   /// default.
   final AutocompleteOptionsViewBuilder<T>? optionsViewBuilder;
 
+  /// Specifies if chips and text field should be wrapped when their width
+  /// exceeds the width of the field itself (true), or whether the field should
+  /// be scrolled horizontally (false)
+  final bool wrap;
+
+  /// {@macro flutter.widgets.TextField.contentPadding}
+  ///
+  /// Content padding for the text field
+  final EdgeInsets textContentPadding;
+
   @override
   ChipsInputState<T> createState() => ChipsInputState<T>();
 }
 
 class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     with RestorationMixin {
+  final _rowScrollController = ScrollController();
   RestorableTextEditingController? _controller;
+
   TextEditingController get _effectiveController =>
       widget.controller ?? _controller!.value;
 
   List<T> _chips = [];
   final space = '\u200B'; //'\u200B'; // '*';
   FocusNode? _focusNode;
+  bool _needsScroll = false;
+
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_focusNode ??= FocusNode());
+
   bool get _isEnabled => widget.enabled ?? widget.decoration?.enabled ?? true;
 
   @override
@@ -556,6 +572,9 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   void _addChip(T newValue) {
     setState(() {
       _chips = [..._chips, newValue];
+      if (!widget.wrap) {
+        _needsScroll = true;
+      }
     });
     if (widget.onChanged != null)
       widget.onChanged!(_chips.toList(growable: false));
@@ -589,11 +608,38 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   void dispose() {
     _focusNode?.dispose();
     _controller?.dispose();
+    _rowScrollController.dispose();
     super.dispose();
+  }
+
+  List<Widget> _addHorizontalSpacing(List<Widget> widgets, double spacing) {
+    if (widgets.length < 2) return widgets;
+    List<Widget> result = [];
+    for (int i = 0; i < widgets.length; i++) {
+      result.add(widgets[i]);
+      if (i < widgets.length - 1) {
+        result.add(SizedBox(width: spacing));
+      }
+    }
+    return result;
+  }
+
+  void _scrollRow() {
+    if (!widget.wrap) {
+      _rowScrollController.animateTo(
+        _rowScrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 100),
+        curve: Curves.ease,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_needsScroll) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollRow());
+      _needsScroll = false;
+    }
     final FocusNode focusNode = _effectiveFocusNode;
     final TextEditingController controller = _effectiveController;
     final chipwidgets =
@@ -626,7 +672,8 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = await widget.findSuggestions(textEditingValue.text.replaceAll("$space", ""));
+          final options = await widget
+              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
           final notUsedOptions =
               options.where((r) => !_chips.contains(r)).toList(growable: false);
           return notUsedOptions;
@@ -689,11 +736,12 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 mouseCursor: widget.mouseCursor,
                 buildCounter: widget.buildCounter,
                 decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: widget.decoration?.hintText,
-                    counterText: "",
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 5)),
+                  border: InputBorder.none,
+                  hintText: widget.decoration?.hintText,
+                  counterText: "",
+                  isDense: true,
+                  contentPadding: widget.textContentPadding,
+                ),
               ),
             )
           ];
@@ -711,11 +759,25 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 expands: widget.expands,
                 child: child,
               ),
-              child: Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: chipsAndTextField,
-              ),
+              child: widget.wrap
+                  ? Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: chipsAndTextField,
+                    )
+                  : ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: PointerDeviceKind.values.toSet(),
+                      ),
+                      child: SingleChildScrollView(
+                        controller: _rowScrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: _addHorizontalSpacing(chipsAndTextField, 4),
+                        ),
+                      ),
+                    ),
             ),
           );
         },
