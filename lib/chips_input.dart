@@ -1,13 +1,12 @@
 library chips_input;
 
 import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:ui' as ui show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/servicer/gestures.dart';
 
 typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
@@ -553,7 +552,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
     registerForRestoration(_controller!, 'controller');
   }
 
-  void _addChip(T newValue) {
+  void addChip(T newValue) {
     setState(() {
       _chips = [..._chips, newValue];
     });
@@ -626,13 +625,14 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = await widget.findSuggestions(textEditingValue.text.replaceAll("$space", ""));
+          final options = await widget
+              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
           final notUsedOptions =
               options.where((r) => !_chips.contains(r)).toList(growable: false);
           return notUsedOptions;
         },
         onSelected: (T option) {
-          _addChip(option);
+          addChip(option);
         },
         displayStringForOption: (T option) {
           return [..._chips.map((e) => "$space"), "$space"].join();
