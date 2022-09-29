@@ -5,7 +5,7 @@ homepage: https://github.com/zsoerenm/chips_input
 
 environment:
   sdk: ">=2.18.0 <3.0.0"
-#  flutter: ">=2.0.0"
+  flutter: ">=3.3.0"
 
 dependencies:
   flutter:
