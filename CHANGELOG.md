@@ -1,3 +1,7 @@
+## [0.1.1] - 6-Sept-2023
+
+* Fix for provided hintstyle not being passed along
+
 ## [0.1.0] - 23-Febr-2022
 
 * Add async loads of data

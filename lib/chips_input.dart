@@ -626,7 +626,8 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
           if (textEditingValue.text.length < _chips.length) {
             _deleteLastChips(textEditingValue.text.length);
           }
-          final options = await widget.findSuggestions(textEditingValue.text.replaceAll("$space", ""));
+          final options = await widget
+              .findSuggestions(textEditingValue.text.replaceAll("$space", ""));
           final notUsedOptions =
               options.where((r) => !_chips.contains(r)).toList(growable: false);
           return notUsedOptions;
@@ -691,6 +692,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: widget.decoration?.hintText,
+                    hintStyle: widget.decoration?.hintStyle,
                     counterText: "",
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 5)),
