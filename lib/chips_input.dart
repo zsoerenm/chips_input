@@ -691,8 +691,6 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
                 buildCounter: widget.buildCounter,
                 decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: widget.decoration?.hintText,
-                    hintStyle: widget.decoration?.hintStyle,
                     counterText: "",
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 5)),
