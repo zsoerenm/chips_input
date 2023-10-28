@@ -72,6 +72,8 @@ class ChipsInput<T extends Object> extends StatefulWidget {
     this.scrollController,
     this.scrollPhysics,
     this.restorationId,
+    //height of suggestion list
+    this.suggestionListHeight,
   })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ??
             (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
@@ -475,6 +477,9 @@ class ChipsInput<T extends Object> extends StatefulWidget {
   /// {@endtemplate}
   final String? restorationId;
 
+  /// Determine the height of the suggestion list
+  final double? suggestionListHeight;
+
   /// {@macro flutter.widgets.RawAutocomplete.optionsViewBuilder}
   ///
   /// If not provided, will build a standard Material-style list of results by
@@ -548,6 +553,9 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
   @override
   String? get restorationId => widget.restorationId;
 
+  //
+  double? get suggestionListHeight => widget.suggestionListHeight;
+
   void _registerController() {
     assert(_controller != null);
     registerForRestoration(_controller!, 'controller');
@@ -600,13 +608,14 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
         _chips.map((val) => widget.chipBuilder(context, this, val)).toList();
     final theme = Theme.of(context);
     final TextStyle style =
-        theme.textTheme.subtitle1!.copyWith(height: 1.5).merge(widget.style);
+        theme.textTheme.titleMedium!.copyWith(height: 1.5).merge(widget.style);
     Widget _defaultOptionsViewBuilder(BuildContext context,
         AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
       return _DefaultOptionsViewBuilder(
         onSelected: onSelected,
         options: options,
         suggestionBuilder: widget.suggestionBuilder!,
+        listHeight: suggestionListHeight,
       );
     }
 
@@ -732,6 +741,7 @@ class _DefaultOptionsViewBuilder<T extends Object> extends StatelessWidget {
     required this.onSelected,
     required this.options,
     required this.suggestionBuilder,
+    this.listHeight,
   }) : super(key: key);
 
   final AutocompleteOnSelected<T> onSelected;
@@ -740,6 +750,8 @@ class _DefaultOptionsViewBuilder<T extends Object> extends StatelessWidget {
 
   final SuggestionBuilder<T> suggestionBuilder;
 
+  final double? listHeight;
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -747,7 +759,7 @@ class _DefaultOptionsViewBuilder<T extends Object> extends StatelessWidget {
       child: Material(
         elevation: 4.0,
         child: Container(
-          height: 200.0,
+          height: listHeight ?? 200.0,
           child: ListView.builder(
             padding: EdgeInsets.all(8.0),
             itemCount: options.length,
