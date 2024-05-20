@@ -600,7 +600,7 @@ class ChipsInputState<T extends Object> extends State<ChipsInput<T>>
         _chips.map((val) => widget.chipBuilder(context, this, val)).toList();
     final theme = Theme.of(context);
     final TextStyle style =
-        theme.textTheme.subtitle1!.copyWith(height: 1.5).merge(widget.style);
+        theme.textTheme.titleSmall!.copyWith(height: 1.5).merge(widget.style);
     Widget _defaultOptionsViewBuilder(BuildContext context,
         AutocompleteOnSelected<T> onSelected, Iterable<T> options) {
       return _DefaultOptionsViewBuilder(
