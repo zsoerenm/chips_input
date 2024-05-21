@@ -1,4 +1,3 @@
-```dart
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:chips_input/chips_input.dart';
@@ -120,4 +119,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-```
